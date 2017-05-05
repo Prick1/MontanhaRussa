@@ -15,8 +15,7 @@ void Passageiro::Rotina(){
         
         pCarro->filaDePassageiros[ID] = 1;
         pCarro->filaDePassageiros[ID] = *std::max_element(pCarro->filaDePassageiros, pCarro->filaDePassageiros + pCarro->totalPassageiros) + 1;//ve a ficha dos outros e pega uma maior
-        while(pCarro->lock.test_and_set());
-        pCarro->lock.clear();
+        
 
         for(unsigned int i = 0; i < pCarro->totalPassageiros; i++){//espera a vez de entrar no carro
             while(pCarro->filaDePassageiros[i] != 0 && pCarro->filaDePassageiros[ID] >= pCarro->filaDePassageiros[i]){
