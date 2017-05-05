@@ -12,7 +12,8 @@ public:
     unsigned int tempoDePasseio = rand()%2000;
     void Start();
     void Rotina();
-    Passageiro(int ID_,Carro* pCarro_);
+    unsigned int voltasDadas = 0;
+    Passageiro(const int& ID_,Carro* pCarro_);
     ~Passageiro();
 };
 

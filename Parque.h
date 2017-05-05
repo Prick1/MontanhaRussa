@@ -3,7 +3,8 @@
 
 class Parque{
 public:
-    unsigned int totalVoltas = 5;
+    Parque(const unsigned int& totalVoltas_): totalVoltas(totalVoltas_){}
+    unsigned int totalVoltas;
     unsigned int Voltas = 0;
     void IncrementarVoltas();
     bool fechouParque = false;

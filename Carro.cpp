@@ -1,6 +1,6 @@
 #include "Carro.h"
 
-Carro::Carro(unsigned int vagas_, unsigned int totalPassageiros_, Parque* pParque_){
+Carro::Carro(const unsigned int& vagas_, const unsigned int& totalPassageiros_, Parque* pParque_){
     vagas = vagas_;
     totalPassageiros = totalPassageiros_;
     pParque = pParque_;
@@ -23,26 +23,24 @@ void Carro::Start(){
 void Carro::Rotina(){
     while(totalPassageiros != 0){
         estado = EsperandoEntrar; // espera os passageiros embarcarem no carro
-        while(nPassageiros < vagas){
+        while(estado != DandoAVolta){
              if(totalPassageiros == 0)
                 return;
              //std::cerr <<"Numero de Passageiros1: "<< nPassageiros << std::endl;
-             std::this_thread::sleep_for(std::chrono::milliseconds(1));
+             std::this_thread::sleep_for(std::chrono::milliseconds(100));
         }
         
-        estado = DandoAVolta;//começa a dar a volta
         std::cerr << "A Volta começou" << std::endl;
         std::this_thread::sleep_for(std::chrono::milliseconds(5000));
         std::cerr << "A volta acabou" << std::endl;
+        pParque->IncrementarVoltas();//incrementa o numero de voltas e verifica se é suficiente para fechar o parque
         estado = EsperandoSair;//termina a volta
 
 
         while(nPassageiros > 0){//espera os passageiros sairem
             //std::cerr <<"Numero de Passageiros2: "<< nPassageiros << std::endl;
-            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
         }
-
-        pParque->IncrementarVoltas();//incrementa o numero de voltas e verifica se é suficiente para fechar o parque
 
     }
 }

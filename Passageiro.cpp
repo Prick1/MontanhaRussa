@@ -1,71 +1,80 @@
 #include "Passageiro.h"
 
+bool TesteDaPadaria(unsigned int fichaP1, unsigned int idP1, unsigned int fichaP2,unsigned int idP2){
+    if(fichaP1 >= fichaP2 && idP1 > idP2){
+        return true;
+    }
+    return false;
+}
 
-Passageiro::Passageiro(int ID_, Carro* pCarro_): ID(ID_), pCarro(pCarro_){}
+Passageiro::Passageiro(const int& ID_,Carro* pCarro_): ID(ID_), pCarro(pCarro_){}
 
 void Passageiro::Rotina(){
     while(1){
 
-        while(pCarro->lock.test_and_set());//ve a ficha dos outros e pega uma maior
+        
         pCarro->filaDePassageiros[ID] = 1;
-        pCarro->filaDePassageiros[ID] = *std::max_element(pCarro->filaDePassageiros, pCarro->filaDePassageiros + pCarro->totalPassageiros) + 1;
-        std::cerr << "Passageiro " << ID << " Pegou a ficha " << pCarro->filaDePassageiros[ID] << std::endl; 
+        pCarro->filaDePassageiros[ID] = *std::max_element(pCarro->filaDePassageiros, pCarro->filaDePassageiros + pCarro->totalPassageiros) + 1;//ve a ficha dos outros e pega uma maior
+        while(pCarro->lock.test_and_set());
         pCarro->lock.clear();
 
         for(unsigned int i = 0; i < pCarro->totalPassageiros; i++){//espera a vez de entrar no carro
-            while(pCarro->filaDePassageiros[ID] > pCarro->filaDePassageiros[i] && pCarro->filaDePassageiros[i] != 0){
-                //std::cerr << "Passageiro "<< ID << " Travado por Passageiro " << i << " Com Ficha " << pCarro->filaDePassageiros[i] << std::endl;
-                std::this_thread::sleep_for(std::chrono::milliseconds(1));
+            while(pCarro->filaDePassageiros[i] != 0 && pCarro->filaDePassageiros[ID] >= pCarro->filaDePassageiros[i]){
+                if(pCarro->filaDePassageiros[ID] == pCarro->filaDePassageiros[i] && ID <= i)
+                    break;
+                std::this_thread::sleep_for(std::chrono::milliseconds(100));
                 
             }
         }
 
 
             
-        while(pCarro->estado != EsperandoEntrar || pCarro->nPassageiros >= pCarro->vagas){//espera a volta acabar e ser liberado para entrar
-            /*std::cerr << "Passageiro " << ID << " Esperando a Volta Acabar" << std::endl;
-            std::cerr << "Estado: ";
-            if(pCarro->estado == EsperandoEntrar)
-                std::cerr << "EsperandoEntrar";
-            else if(pCarro->estado == EsperandoSair)
-                std::cerr << "EsperandoSair";
-            else
-                std::cerr << "DandoAVolta";
-            std::cerr << std::endl;
-            std::cerr << "nPassageiros :" << pCarro->nPassageiros << std::endl;*/
-            std::this_thread::sleep_for(std::chrono::milliseconds(1));
-
-        } // espera a volta acabar
-        if(pCarro->pParque->fechouParque){//Se o parque fechou, sai dele
-            std::cerr << "Passageiro " << ID << " Saiu do Parque" << std::endl;
+        while(pCarro->estado != EsperandoEntrar){//espera a volta acabar e ser liberado para entrar
+         
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            if(pCarro->pParque->fechouParque){//Se o parque fechou, sai dele
+                while(pCarro->lock.test_and_set());
+                std::cerr << "Passageiro [" << ID << "] , Que Andou ["<< voltasDadas <<"] Voltas, Saiu do Parque" << std::endl;
+                pCarro->totalPassageiros--;//diminui o numero de passageiros
+                pCarro->filaDePassageiros[ID] = 0;//libera a vez na padaria
+                pCarro->lock.clear();
+                return;
+            }
+        } 
+        /*if(pCarro->pParque->fechouParque){//Se o parque fechou, sai dele
+            std::cerr << "Passageiro [" << ID << "] , Que Andou ["<< voltasDadas <<"] Voltas, Saiu do Parque" << std::endl;
             pCarro->totalPassageiros--;//diminui o numero de passageiros
             pCarro->filaDePassageiros[ID] = 0;//libera a vez na padaria
-            break;
-        }
+            return;
+        }*/
 
-        std::cerr << "Passageiro " << ID << " Entrou no carro" << std::endl;
+        std::cerr << "Passageiro [" << ID << "] Com ficha ["<< pCarro->filaDePassageiros[ID] << "] Entrou no carro" << std::endl;
         pCarro->nPassageiros++;//entra no carro
+        if(pCarro->nPassageiros == pCarro->vagas)
+            pCarro->estado = DandoAVolta;
         
         pCarro->filaDePassageiros[ID] = 0;
 
         while(pCarro->estado != EsperandoSair){//espera a volta acabar pra sair do carro
-            /*std::cerr << "Passageiro " << ID <<" Travado" << std::endl;
-            std::cerr  << "Estado2: ";
-             if(pCarro->estado == EsperandoEntrar)
-                std::cerr << "EsperandoEntrar";
-            else if(pCarro->estado == EsperandoSair)
-                std::cerr << "EsperandoSair";
-            else
-                std::cerr << "DandoAVolta";
-            std::cerr << std::endl;*/
-            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            
         }
-        while(pCarro->lock.test_and_set());//sair do carro
-        (pCarro->nPassageiros)--;
-        std::cerr << "Passageiro " << ID << " Saiu do Carro" << std::endl;
-        pCarro->lock.clear();
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(rand()%5000));//passear pelo parque
+        while(pCarro->lock.test_and_set());//sair do carro
+        std::cerr << "Passageiro [" << ID << "] Saiu do Carro" << std::endl;
+        (pCarro->nPassageiros)--;
+        tempoDePasseio = rand()%5000;//define o tempo que vai passear
+        voltasDadas++;
+        if(pCarro->pParque->Voltas == pCarro->pParque->totalVoltas){//Se o parque fechou, sai dele
+            std::cerr << "Passageiro [" << ID << "] , Que Andou ["<< voltasDadas <<"] Voltas, Saiu do Parque" << std::endl;
+            pCarro->totalPassageiros--;//diminui o numero de passageiros
+            pCarro->lock.clear();
+            break;
+        }
+        pCarro->lock.clear();
+        std::this_thread::sleep_for(std::chrono::milliseconds(tempoDePasseio));//passear pelo parque
+        
     }
 
 }
@@ -74,7 +83,4 @@ void Passageiro::Start(){
     thread = new std::thread(&Passageiro::Rotina, this);
 }
 
-Passageiro::~Passageiro(){
-    if(thread != NULL)
-        delete thread;
-}
+Passageiro::~Passageiro(){}
