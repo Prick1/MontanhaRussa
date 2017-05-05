@@ -41,12 +41,14 @@ void Passageiro::Rotina(){
                 return;
             }
         } 
-        /*if(pCarro->pParque->fechouParque){//Se o parque fechou, sai dele
+        if(pCarro->pParque->Voltas == pCarro->pParque->totalVoltas){//Se o parque fechou, sai dele
+            while(pCarro->lock.test_and_set());
             std::cerr << "Passageiro [" << ID << "] , Que Andou ["<< voltasDadas <<"] Voltas, Saiu do Parque" << std::endl;
             pCarro->totalPassageiros--;//diminui o numero de passageiros
             pCarro->filaDePassageiros[ID] = 0;//libera a vez na padaria
+            pCarro->lock.clear();
             return;
-        }*/
+        }
 
         std::cerr << "Passageiro [" << ID << "] Com ficha ["<< pCarro->filaDePassageiros[ID] << "] Entrou no carro" << std::endl;
         pCarro->nPassageiros++;//entra no carro
